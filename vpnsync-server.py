@@ -71,6 +71,15 @@ def log_write(message):
 
 def run():
   log_write('Sync vpn users...')
+  # Подключение к серверу
+  client = Client(get_config('ADServer')+"."+get_config('DomainRealm'), auth="kerberos", ssl=False, username=get_config('ADUserName'), password=get_config('ADUserPassword'))
+  # Проверка операционной системы компьютера
+  script = """([adsisearcher]"(objectcategory=user)").FindAll() | where {$_.properties['wwwhomepage'] -like '"""+get_config('VPNMask')+"""*'} | %{ $_.GetDirectoryEntry() } | ForEach-Object {$_.samaccountname, $_.wwwhomepage}"""
+  try:
+    vpnusers, streams, had_error = client.execute_ps(script)
+  except:
+    log_write('[adsisearcher] objectcategory=user powershell error')
+  print(vpnusers)
 
 #------------------------------------------------------------------------------------------------
 
