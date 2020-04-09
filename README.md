@@ -1,12 +1,13 @@
 ![Alt text](vpnsync.png?raw=true "Title")
 # vpnsync
 ### Система обновления пользовательских аккаунтов на vpn шлюзе из внутреннего домена на Active Directory
-### Version 0.02 (initial)
+### Version 0.03 (early development)
 <hr>
-Система обновления пользовательских аккаунтов на vpn шлюзе из внутреннего домена на Active Directory.
+Обновления пользовательских аккаунтов для openvpn шлюза из внутреннего домена на Active Directory.
 <br>
 Протестировано и собрано с использованием следующих компонентов:
 <ul>
-  <li>Python: </li>
-  <li>pypsrp: </li>
+  <li>Python: 3.8.1</li>
+  <li>pypsrp: 0.4.0</li>
+  <li>openvpn: 2.4.8</li>
  </ul>

@@ -4,7 +4,7 @@
 # Обновление пользовательских аккаунтов на vpn шлюзе из внутреннего домена на Active Directory
 #------------------------------------------------------------------------------------------------
 
-import os, sys
+import os, sys, getpass, hashlib
 from datetime import datetime
 try:
   from pypsrp.client import Client
@@ -71,15 +71,56 @@ def log_write(message):
 
 def run():
   log_write('Sync vpn users...')
-  # Подключение к серверу
+  # Проверка существования файла VPNUsersList
+  try:
+    userslist = open(get_config('VPNUsersList'), 'r').read().split()
+  except IOError as err:
+    open(get_config('VPNUsersList'), 'w')
+    userslist = []
+  #
+  # Подключение к серверу Active Directory
   client = Client(get_config('ADServer')+"."+get_config('DomainRealm'), auth="kerberos", ssl=False, username=get_config('ADUserName'), password=get_config('ADUserPassword'))
-  # Получение списка vpn пользователей и их паролей
+  # Получение списка пользователей и их паролей для тех, у кого поле wwwhomepage начинается с VPNMask
   script = """([adsisearcher]"(objectcategory=user)").FindAll() | where {$_.properties['wwwhomepage'] -like '"""+get_config('VPNMask')+"""*'} | %{ $_.GetDirectoryEntry() } | ForEach-Object {$_.samaccountname, $_.wwwhomepage}"""
   try:
-    vpnusers, streams, had_error = client.execute_ps(script)
+    adusers, streams, had_error = client.execute_ps(script)
   except:
     log_write('[adsisearcher] objectcategory=user powershell error')
-  print(vpnusers)
+  adusers = adusers.splitlines()
+  #
+  # Удаление из списка userslist, пользователей более не присутствующих в adusers
+  for user in userslist[::2]:
+    try:
+      adusers.index(user)
+    except ValueError:
+      userpos = userslist.index(user)
+      # Удаление пользователя и его пароля
+      userslist.pop(userpos)
+      userslist.pop(userpos)
+      log_write('Deleted user '+user)
+  #
+  # Добавление и обновление пользователей
+  pos = 0
+  sha_salt = os.urandom(10)
+  while pos < len(adusers):
+    try:
+      userpos = userslist.index(adusers[pos])
+      password = adusers[pos+1][len(get_config('VPNMask')):]
+      userslist[userpos+1] = sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex()
+      log_write('Updated user '+adusers[pos])
+    except ValueError:
+      userslist.append(adusers[pos])
+      password = adusers[pos+1][len(get_config('VPNMask')):]
+      userslist.append(sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex())
+      log_write('Added user '+adusers[pos])
+    pos = pos + 2
+  #
+  # Запись в файл VPNUsersList
+  with open(get_config('VPNUsersList'), 'w') as result:
+    pos = 0
+    while pos < len(userslist):
+      result.write(userslist[pos]+' '+userslist[pos+1]+'\n')
+      pos += 2
 
 #------------------------------------------------------------------------------------------------
 
