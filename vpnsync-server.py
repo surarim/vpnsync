@@ -88,33 +88,38 @@ def run():
     log_write('[adsisearcher] objectcategory=user powershell error')
   adusers = adusers.splitlines()
   #
+  # Добавление и обновление пользователей
+  pos = 0
+  sha_salt = os.urandom(10)
+  while pos < len(adusers):
+    password = adusers[pos+1][len(get_config('VPNMask')):]
+    if len(password) > 5: # Проверка длины пароля
+      try:
+        userpos = userslist.index(adusers[pos])
+        userslist[userpos+1] = sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex()
+        log_write('Updated user '+adusers[pos])
+      except ValueError:
+        userslist.append(adusers[pos])
+        userslist.append(sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex())
+        log_write('Added user '+adusers[pos])
+    else:
+      # Удаление пользователя и его пароля
+      adusers.pop(pos)
+      adusers.pop(pos)
+    pos = pos + 2
+  #
   # Удаление из списка userslist, пользователей более не присутствующих в adusers
   for user in userslist[::2]:
     try:
       adusers.index(user)
     except ValueError:
-      userpos = userslist.index(user)
+      pos = userslist.index(user)
       # Удаление пользователя и его пароля
-      userslist.pop(userpos)
-      userslist.pop(userpos)
+      userslist.pop(pos)
+      userslist.pop(pos)
       log_write('Deleted user '+user)
   #
-  # Добавление и обновление пользователей
-  pos = 0
-  sha_salt = os.urandom(10)
-  while pos < len(adusers):
-    try:
-      userpos = userslist.index(adusers[pos])
-      password = adusers[pos+1][len(get_config('VPNMask')):]
-      userslist[userpos+1] = sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex()
-      log_write('Updated user '+adusers[pos])
-    except ValueError:
-      userslist.append(adusers[pos])
-      password = adusers[pos+1][len(get_config('VPNMask')):]
-      userslist.append(sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex())
-      log_write('Added user '+adusers[pos])
-    pos = pos + 2
-  #
+
   # Запись в файл VPNUsersList
   with open(get_config('VPNUsersList'), 'w') as result:
     pos = 0
