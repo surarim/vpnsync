@@ -1,7 +1,7 @@
 ![Alt text](vpnsync.png?raw=true "Title")
 # vpnsync
 ### Система обновления пользовательских аккаунтов на vpn шлюзе из внутреннего домена на Active Directory
-### Version 0.04 (early development)
+### Version 0.05 (early development)
 <hr>
 Обновления пользовательских аккаунтов для openvpn шлюза из внутреннего домена на Active Directory.
 <br>

@@ -90,17 +90,20 @@ def run():
   #
   # Добавление и обновление пользователей
   pos = 0
-  sha_salt = os.urandom(10)
   while pos < len(adusers):
+    # Получение исходного пароля пользователя
     password = adusers[pos+1][len(get_config('VPNMask')):]
     if len(password) > 5: # Проверка длины пароля
+      # Генерирование соли и пароля пользователя
+      sha_salt = os.urandom(10)
+      password = sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex()
       try:
         userpos = userslist.index(adusers[pos])
-        userslist[userpos+1] = sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex()
+        userslist[userpos+1] = password
         log_write('Updated user '+adusers[pos])
       except ValueError:
         userslist.append(adusers[pos])
-        userslist.append(sha_salt.hex()+hashlib.pbkdf2_hmac(hash_name='sha256', password=password.encode(), salt = sha_salt, iterations=100).hex())
+        userslist.append(password)
         log_write('Added user '+adusers[pos])
     else:
       # Удаление пользователя и его пароля
