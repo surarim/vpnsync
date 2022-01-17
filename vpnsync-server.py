@@ -69,6 +69,7 @@ def log_write(message):
 
 #------------------------------------------------------------------------------------------------
 
+# Функция работы с пользователями
 def run():
   log_write('Sync vpn users...')
   # Проверка существования файла VPNUsersList
@@ -106,7 +107,7 @@ def run():
         userslist.append(password)
         log_write('Added user '+adusers[pos])
     else:
-      # Удаление пользователя и его пароля
+      # Удаление пользователя и его пароля (не соответствие длины пароля)
       adusers.pop(pos)
       adusers.pop(pos)
     pos = pos + 2
@@ -122,7 +123,6 @@ def run():
       userslist.pop(pos)
       log_write('Deleted user '+user)
   #
-
   # Запись в файл VPNUsersList
   with open(get_config('VPNUsersList'), 'w') as result:
     pos = 0
