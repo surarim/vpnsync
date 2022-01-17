@@ -9,5 +9,5 @@
 <ul>
   <li>Python: 3.8.1</li>
   <li>pypsrp: 0.4.0</li>
-  <li>openvpn: 2.4.8</li>
+  <li>openvpn: 2.5.5</li>
  </ul>
